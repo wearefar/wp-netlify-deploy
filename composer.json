@@ -5,7 +5,7 @@
     "type": "wordpress-plugin",
     "autoload": {
         "psr-4": {
-            "Wearefar\\WpNetlifyDeploy\\": "src/"
+            "Wearefar\\WpNetlify\\": "src/"
         }
     },
     "authors": [
