@@ -8,6 +8,5 @@ Set environment variables
 
 ```
 NETLIFY_BUILD_HOOK=
-NETLIFY_PREVIEW_HOOK=
 NETLIFY_JWS_TOKEN=
 ```

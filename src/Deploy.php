@@ -12,8 +12,14 @@ use WP_REST_Server;
 
 class Deploy
 {
+    private ?string $buildHook;
+    private ?string $jwsToken;
+
     public function __construct(string $file)
     {
+        $this->buildHook = $_ENV['NETLIFY_BUILD_HOOK'] ?? null;
+        $this->jwsToken = $_ENV['NETLIFY_JWS_TOKEN'] ?? null;
+
         add_action('wp_dashboard_setup', array($this, 'addDashboardWidget'));
         add_action('admin_menu', array($this, 'registerSubmenu'));
         add_action('admin_enqueue_scripts', [$this, 'enqueueAdminScripts']);
@@ -32,12 +38,14 @@ class Deploy
 
     public function deployWidget()
     {
-        $url = admin_url('admin.php?page=deploy');
+        $url = admin_url('tools.php?page=deploy');
         ?>
+        <?php if ($this->buildHook): ?>
         <form method="POST" action="<?= $url ?>" style="display: inline;">
             <?php wp_nonce_field('deploy', 'deploy_nonce'); ?>
             <button class="button button-primary" name="action" value="deploy">Deploy now</button>
         </form>
+        <?php endif; ?>
         <a href="<?= $url; ?>" class="button">View deploy log</a>
         <?php
     }
@@ -65,35 +73,42 @@ class Deploy
         <div class="wrap">
             <h1>Netlify deploys</h1>
         <?php
-        if (isset($_REQUEST['action'])) {
-            if (!isset($_REQUEST['deploy_nonce']) || wp_verify_nonce($_REQUEST['deploy_nonce'], 'deploy_nonce')) {
-                return;
-            }
 
-            switch ($_REQUEST['action']) {
-                case 'preview':
-                    $url = $_ENV['NETLIFY_PREVIEW_HOOK'];
-                    break;
-                case 'deploy':
-                default:
-                    $url = $_ENV['NETLIFY_BUILD_HOOK'];
-                    break;
+        $missingEnvVars = array_keys(array_filter([
+            'NETLIFY_BUILD_HOOK' => $this->buildHook,
+            'NETLIFY_JWS_TOKEN' => $this->jwsToken,
+        ], fn ($value) => empty($value)));
+
+        if ($missingEnvVars) : ?>
+            <div class="notice notice-warning">
+                <p><?php echo esc_html__('Netlify environment variables are not properly set. Please check your .env file.', 'wp-netlify-deploy'); ?></p>
+                <p><?php echo esc_html(sprintf(
+                    __('Missing required environment variable(s): %s.', 'wp-netlify-deploy'),
+                    implode(', ', $missingEnvVars)
+                )); ?></p>
+            </div>
+        <?php endif; ?>
+
+        <?php
+        if (($_REQUEST['action'] ?? null) === 'deploy') {
+            if (!wp_verify_nonce($_REQUEST['deploy_nonce'] ?? '', 'deploy')) {
+                return;
             }
 
             $ch = curl_init();
 
             curl_setopt_array($ch, array(
-                CURLOPT_URL => $url,
+                CURLOPT_URL => $this->buildHook,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => []
             ));
 
-            $result = curl_exec($ch);
+            curl_exec($ch);
 
             ?>
             <div class="notice notice-info is-dismissible">
-                <p><?php echo 'preview' == $_REQUEST['action'] ? __( 'Preview triggered.', 'grauroig' ) : __( 'Deploy triggered.', 'grauroig'); ?></p>
+                <p><?= __('Deploy triggered.', 'wp-netlify-deploy'); ?></p>
             </div>
             <?php
         }
@@ -103,15 +118,14 @@ class Deploy
                 <div>
                     <h2>Deploy log</h2>
                 </div>
+                <?php if ($this->buildHook): ?>
                 <div class="deploys-buttons">
                     <form method="POST">
                         <?php wp_nonce_field('deploy', 'deploy_nonce'); ?>
-                        <?php if ($_ENV['NETLIFY_PREVIEW_HOOK']) : ?>
-                            <button class="button" name="action" value="preview">Make preview</button>
-                        <?php endif ?>
                         <button class="button button-primary" name="action" value="deploy">Trigger deploy</button>
                     </form>
                 </div>
+                <?php endif; ?>
             </div>
         <?php
 
