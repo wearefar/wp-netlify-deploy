@@ -131,11 +131,12 @@ class Deploy
 
         global $wpdb;
 
-        if($wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}netlify_deploys'") != "{$wpdb->prefix}netlify_deploys") {
+        $table_name = $wpdb->prefix . 'netlify_deploys';
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_name)) !== $table_name) {
             $this->createDeploysTable();
         }
 
-        $deploys = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}netlify_deploys ORDER BY id DESC");
+        $deploys = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$table_name} ORDER BY id DESC"));
 
         if ( $deploys ) {
             echo '<ul class="deploys-list">';
@@ -184,6 +185,10 @@ class Deploy
 
         $body = json_decode($body);
 
+        if (!is_object($body) || empty($body->id)) {
+            return new WP_Error('invalid_payload', __('Invalid webhook payload.', 'wp-netlify-deploy'), array('status' => 400));
+        }
+
         $data = [
             'deploy_id' => $body->id,
             'site_id' => $body->site_id,
@@ -207,10 +212,13 @@ class Deploy
             'screenshot_url' => $body->screenshot_url
         ];
 
-        if (null === $wpdb->get_row("SELECT * FROM {$wpdb->prefix}netlify_deploys WHERE deploy_id = '{$body->id}'")) {
-            $wpdb->insert("{$wpdb->prefix}netlify_deploys", $data);
+        $table_name = $wpdb->prefix . 'netlify_deploys';
+        $deploy_id = (string) $body->id;
+
+        if (null === $wpdb->get_row($wpdb->prepare("SELECT 1 FROM {$table_name} WHERE deploy_id = %s LIMIT 1", $deploy_id))) {
+            $wpdb->insert($table_name, $data);
         } else {
-            $wpdb->update("{$wpdb->prefix}netlify_deploys", $data, ['deploy_id' => $body->id]);
+            $wpdb->update($table_name, $data, ['deploy_id' => $deploy_id]);
         }
     }
 

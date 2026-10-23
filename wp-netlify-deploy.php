@@ -10,6 +10,6 @@ Requires PHP: 8.4
 License: MIT
 */
 
-require __DIR__.'/src/deploy.php';
+require __DIR__.'/src/Deploy.php';
 
 new WeAreFar\WPNetlify\Deploy(__FILE__);
