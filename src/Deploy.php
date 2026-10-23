@@ -25,7 +25,7 @@ class Deploy
     {
         wp_add_dashboard_widget(
             'deploy_widget',
-            'Deploy',
+            'Netlify Deploys',
             array($this,'deployWidget')
         );
     }
@@ -45,9 +45,9 @@ class Deploy
     public function registerSubmenu()
     {
         add_submenu_page(
-            null,
-            'Deploy',
-            'Deploy',
+            'tools.php',
+            'Netlify Deploys',
+            'Netlify Deploys',
             'edit_posts',
             'deploy',
             array($this, 'deployPageOutput')
@@ -90,7 +90,6 @@ class Deploy
             ));
 
             $result = curl_exec($ch);
-            curl_close($ch);
 
             ?>
             <div class="notice notice-info is-dismissible">
