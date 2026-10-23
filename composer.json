@@ -1,6 +1,6 @@
 {
     "name": "wearefar/wp-netlify-deploy",
-    "description": "Trigger Netlify deploys form the WordPress admin",
+    "description": "Trigger Netlify deploys from the WordPress admin",
     "license": "MIT",
     "type": "wordpress-plugin",
     "autoload": {
@@ -15,8 +15,9 @@
         }
     ],
     "require": {
-        "firebase/php-jwt": "^6.2",
-        "nesbot/carbon": "^2.58",
-        "symfony/http-foundation": "^5.4"
+        "php": "^8.4",
+        "firebase/php-jwt": "^7.2.1",
+        "nesbot/carbon": "^3.15",
+        "symfony/http-foundation": "^8.1"
     }
 }

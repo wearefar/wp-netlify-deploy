@@ -201,7 +201,7 @@ class Deploy
         }
     }
 
-    public function signed($request, $body)
+    public function signed(Request $request, string $body)
     {
         $signature = $request->headers->get('X-Webhook-Signature');
 
