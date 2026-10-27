@@ -136,7 +136,9 @@ class Deploy
             $this->createDeploysTable();
         }
 
-        $deploys = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$table_name} ORDER BY id DESC"));
+        $deploys = $wpdb->get_results(
+            $wpdb->prepare('SELECT * FROM %i ORDER BY id DESC', $table_name)
+        );
 
         if ( $deploys ) {
             echo '<ul class="deploys-list">';
